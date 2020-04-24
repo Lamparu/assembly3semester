@@ -5,8 +5,8 @@
 lens 	db 	50 	dup(?)	; lens of words
 ptrs 	dw	50	dup(?)	; ptrs to the start of words
 n	dw	?	; amount of words
-delit	db	' ', ';', ',', 9, 0
-string 	db 	'Hello   world;Vlada,;good', 0
+delit	db	' ', ';', ',', 0
+string 	db 	'Hello   world;Doing,;great', 0
 newstr	db	30	dup(?)	; result string
 sumlen	dw	30
 .code
@@ -19,14 +19,14 @@ sumlen	dw	30
 	lea	di, delit
 	xor	bx, bx	; counter of words
 	xor	dx, dx	; counter of lens of all words
-@m1:	call	space
+@m1:	call	space	; returns beginning of a word
 	cmp	byte ptr [si], 0	; end of str?
 	JE	@m2	; if end - move to the second part 
 	shl	bx, 1	; if its a beginning of a word
 	mov	ptrs[bx], si	; insert the beginning in mass
 	shr	bx, 1
 	mov	cx, si
-	call	words
+	call	words	; return 1 symbol after word
 	sub	cx, si	; cx - len of word
 	neg	cx
 	mov	lens[bx], cl
@@ -80,7 +80,7 @@ sumlen	dw	30
 	shr	bx, 1
 	mov	cl, lens[bx]	; len of a word
 	xor	ch, ch
-	rep	movsb	; copy symbol cx times
+	rep	movsb	; copy to di symbol from si cx times
 	inc	bx
 	pop	cx
 	loop	@m3
@@ -99,18 +99,18 @@ locals 	@@
 	push	di
 	xor	al, al
 	mov	cx, 65535
-	repne	scasb
+	repne	scasb	; repeat while 0 in al not equal to di
 	neg	cx
-	dec	cx
+	dec	cx	
 	push	cx
 @@m1:	pop	cx
 	pop	di
 	push	di
 	push	cx
-	lodsb
-	repne	scasb
-	JCXZ	@@m2
-	jmp	@@m1
+	lodsb		; from SI to AL
+	repne	scasb	; while al not equal to di 
+	JCXZ	@@m2	; cx = 0 => symbol not in delit
+	jmp	@@m1	; check again
 @@m2:	dec	si
 	add	sp, 2
 	pop	di
